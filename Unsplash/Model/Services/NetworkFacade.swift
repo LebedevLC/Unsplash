@@ -21,7 +21,7 @@ final class NetworkFacade {
         self.collectionPhotoRandomViewController = collectionPhotoRandomViewController
     }
     
-    func getPhotos() {
+    func getPhotos(completion: @escaping () -> Void) {
         let queue = DispatchQueue.global(qos: .utility)
         queue.async {
             self.network.getRandomPhotos(count: self.count) {[weak self] result in
@@ -29,8 +29,10 @@ final class NetworkFacade {
                 switch result {
                 case .success(let response):
                     self.setCellModel(response: response)
+                    completion()
                 case .failure:
                     debugPrint("ERROR")
+                    completion()
                 }
             }
         }
@@ -57,9 +59,8 @@ final class NetworkFacade {
         let queue = DispatchQueue.global(qos: .utility)
         queue.async {
             self.factory.constructModelsCell(from: response, completion: { model in
-                collectionPhotoRandomViewController.cellModel = model
+                collectionPhotoRandomViewController.cellModel.append(contentsOf: model)
             })
         }
     }
-    
 }

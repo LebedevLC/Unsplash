@@ -28,6 +28,7 @@ class CollectionPhotoViewController: UIViewController {
     
     private var tapGesture: UITapGestureRecognizer?
     private var keyboardIsHide: Bool = true
+    private var isLoading: Bool = false
     private var query: String = ""
     private var networkFacade: NetworkFacade?
     
@@ -44,7 +45,7 @@ class CollectionPhotoViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         networkFacade = NetworkFacade(collectionPhotoRandomViewController: self)
-        networkFacade?.getPhotos()
+        networkFacade?.getPhotos(completion: {})
         setupCollection()
         setSearchBar()
     }
@@ -117,7 +118,7 @@ extension CollectionPhotoViewController {
 
 // MARK: - CollectionView
 
-extension CollectionPhotoViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+extension CollectionPhotoViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UICollectionViewDataSourcePrefetching {
     
     private func setupCollection() {
         view.backgroundColor = .systemBackground
@@ -126,6 +127,7 @@ extension CollectionPhotoViewController: UICollectionViewDelegate, UICollectionV
         
         collectionView.delegate = self
         collectionView.dataSource = self
+        collectionView.prefetchDataSource = self
         collectionView.register(PhotoRandomCollectionCell.self, forCellWithReuseIdentifier: PhotoRandomCollectionCell.identifier)
         
         view.addSubview(collectionView)
@@ -169,5 +171,16 @@ extension CollectionPhotoViewController: UICollectionViewDelegate, UICollectionV
         let navVC = UINavigationController(rootViewController: detailsVC)
         navVC.modalPresentationStyle = .fullScreen
         self.present(navVC, animated: true, completion: nil)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
+        guard let maxItems = indexPaths.map({$0.item}).max() else { return }
+        if maxItems > cellModel.count - 5,
+           !isLoading {
+            isLoading = true
+            networkFacade?.getPhotos(completion: {
+                self.isLoading = false
+            })
+        }
     }
 }
