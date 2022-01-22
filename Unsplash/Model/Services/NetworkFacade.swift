@@ -28,7 +28,7 @@ final class NetworkFacade {
                 guard let self = self else { return }
                 switch result {
                 case .success(let response):
-                    self.setCellModel(response: response)
+                    self.setCellModel(response: response, isSearch: false)
                     completion()
                 case .failure:
                     debugPrint("ERROR")
@@ -45,7 +45,7 @@ final class NetworkFacade {
                 guard let self = self else { return }
                 switch result {
                 case .success(let response):
-                    self.setCellModel(response: response)
+                    self.setCellModel(response: response, isSearch: true)
                 case .failure:
                     debugPrint("ERROR")
                 }
@@ -54,12 +54,17 @@ final class NetworkFacade {
     }
     
     // Factory
-    private func setCellModel(response: [ResponseModel]) {
+    private func setCellModel(response: [ResponseModel], isSearch: Bool) {
         guard let collectionPhotoRandomViewController = collectionPhotoRandomViewController else { return }
         let queue = DispatchQueue.global(qos: .utility)
         queue.async {
             self.factory.constructModelsCell(from: response, completion: { model in
-                collectionPhotoRandomViewController.cellModel.append(contentsOf: model)
+                switch isSearch {
+                case false:
+                    collectionPhotoRandomViewController.cellModel.append(contentsOf: model)
+                case true:
+                    collectionPhotoRandomViewController.cellModel = model
+                }
             })
         }
     }
